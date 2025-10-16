@@ -23,7 +23,7 @@ if not exist "%INI%" (
       echo ; mac address format xx-xx-xx-xx-xx-xx
       echo PHONE_MAC=
 	  echo.
-      echo ; set debug to 0 for off(default) or 1 to get log file on your desktop folder
+      echo ; set debug to 0 for off or 1 to get log file on your desktop folder
       echo debug=0
     ) > %INI%
     echo config file created. Press any key to open it for editing.
