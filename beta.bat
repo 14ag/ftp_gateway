@@ -1,4 +1,4 @@
-@REM @echo off
+@echo off
 
 
 
@@ -168,16 +168,10 @@ for %%a in (%get_gateways%) do (
 		call :check_async
 
 		for /f "usebackq tokens=* delims=" %%d in ("%found_ips%") do (
-			set "line=%%d"
-			echo _!line!_a
-			@rem skip empty lines (after trimming leading spaces)
-			if not "!line!"=="" (
-				@rem get first character to detect comment markers
-				set "first=!line:~0,1!"
-				if not "!first!"=="#" if not "!first!"==";" (
-				echo _!line!_b
-				)
+			for /f "tokens=*" %%e in ("%%d") do (
+				echo _%%e_
 			)
+			
 		)
 
 		@REM call :connect && goto :eof
