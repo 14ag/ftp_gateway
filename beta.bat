@@ -443,7 +443,7 @@ for /F "tokens=1,* delims= " %%a in ("%args%") do (
 call %read% %foo% %set_timeoutx% 
 set "set_timeoutx=%io%"
 call :debug before timeout %set_timeoutx% 
-start /b cmd /v:on /c "timeout /t %t% /nobreak >nul && (%command% & (set /a x=%io%+1) >nul & %write% %foo% %x%)"
+start /b cmd /v:on /c "timeout /t %t% /nobreak >nul && (%command% & (set /a "x=%io%+1") >nul & %write% %foo% ^!x^!)"
 set "check_async=v"
 pause
 call :debug after timeout %set_timeoutx%
@@ -499,19 +499,18 @@ if %ERRORLEVEL% equ 0 (
 	) else if "!rw!"=="ww" (
 		echo !data! >>!file!
 	)
+	call :debug io [!rw!] operation on file [!file!] with data [!data! !io!]
 ) else (
     timeout /t 5 /nobreak >nul
     set /a TRY_COUNT+=1
     if !TRY_COUNT! lss %MAX_TRY% goto TryLock
     echo max wait.
-    
 )
 
 rmdir "!LOCK_DIR!" 2>nul
 for /F "tokens=* delims= " %%a in ("!io!") do (
     endlocal & set "io=%%a" 
 )
-call :debug io [%rw%] operation on file [%file%] with data [%data% %io%]
 exit /b
 
 
