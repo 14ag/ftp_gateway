@@ -329,7 +329,7 @@ set "i=0"
 set "choicelist="
 :: Replace every comma with a quote, a space, and another quote (" ") and Wrap the entire resulting string in quotes
 set "arg_list="%arg_string:,=" "%""
-rem Loop through the new quoted, space-separated list
+@rem Loop through the new quoted, space-separated list
 for %%a in (%arg_list%) do (
 	set /a i+=1
 	:: Create dynamic variable names (_1, _2, etc.)
@@ -471,9 +471,9 @@ exit /b
 
 
 :io
-REM set "read="%~f0" io r"
-REM set "write="%~f0" io w"
-REM set "append="%~f0" io ww"
+@REM set "read="%~f0" io r"
+@REM set "write="%~f0" io w"
+@REM set "append="%~f0" io ww"
 :: usage call :io [r|w|ww] [filename] [data]
 :: stores data in var %io% when doing read operation
 call :debug entering :io with args [%*]
@@ -542,11 +542,11 @@ if %dds% equ 1 (
 )
 
 :formatting
+:: formatting just because
+:: Usage: formatting <number_of_blank_lines>
 set "args=%*"
 set /a spacing=%lines%-%args%
 set /a spacing=%spacing%/2
-:: formatting just because
-:: Usage: formatting <number_of_blank_lines>
 
 for /L %%a in (1,1,%spacing%) do ( echo.)
 exit /b 0
