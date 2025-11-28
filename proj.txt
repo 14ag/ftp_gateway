@@ -15,7 +15,7 @@ if wifi and mobile hotspot and ethernet GetGateways_Strict_Debug.vbs is supposed
 9 if yes find the gateway address of this network
 10 store it in variable 'ethernet' using the format specified eg 'mobileHotspot_2.2.2.2'
 11 for all the variables (im talking about "wifi" "ethernet" "hotspot" ) that are not empty jon them to ine string separated by space (" "). this string should be saved in the variable "gateways"
-12 return this variable to the batch file to be saved in the variable "gateways" shown on screen
+12 return this variable to the batch file to be saved in the variable "gateways" shown on screen 
  
  
  windows mobile hotspot is usually under the name "Microsoft Wi-Fi Direct Virtual Adapter". hosted network was deprecated many yrs ago
