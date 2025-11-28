@@ -170,9 +170,9 @@ for %%a in (%get_gateways%) do (
 		for /f "usebackq tokens=* delims=" %%d in ("%found_ips%") do (
 			set "line=%%d"
 			echo _!line!_a
-			rem skip empty lines (after trimming leading spaces)
+			@rem skip empty lines (after trimming leading spaces)
 			if not "!line!"=="" (
-				rem get first character to detect comment markers
+				@rem get first character to detect comment markers
 				set "first=!line:~0,1!"
 				if not "!first!"=="#" if not "!first!"==";" (
 				echo _!line!_b
@@ -453,17 +453,17 @@ call :debug after timeout after fetch  %set_timeoutx%
 goto :eo_set_timeout
 
 :check_async
-call %read% %set_timeoutx% %foo%
+call %read% %foo%
 set "set_timeoutx=%io%"
 call :debug checking async tasks %set_timeoutx% of %set_timeouty%
 pause
-if not "%set_timeoutx%"=="%set_timeouty%" (
-	timeout /t 1 /nobreak >nul 2>nul
-	goto :check_async
-) else (
+if %set_timeoutx% equ %set_timeouty% (
 	set "check_async="
 	del %foo% >nul 2>nul
 	goto :eo_set_timeout
+) else (
+	timeout /t 1 /nobreak >nul 2>nul
+	goto :check_async
 )
 :eo_set_timeout
 exit /b
