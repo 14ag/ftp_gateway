@@ -150,7 +150,7 @@ for %%a in (%get_gateways%) do (
 	)
 )
 setlocal enabledelayedexpansion
-
+cls
 set /a i=0
 for %%a in (%get_gateways%) do (
 	set /a i+=1
@@ -161,7 +161,7 @@ for %%a in (%get_gateways%) do (
 		echo scanning the %%b network for ftp servers
 
 		call :network_bits %%c
-cls
+
 		call :debug network bits: !network_bits!
 		
 		call :set_timeout 1 %ping_handler% 4-5 %%c !network_bits!
@@ -423,58 +423,47 @@ exit /b 0>nul
 :set_timeout
 :: usage call :set_timeout [time in sec.] [single line command with escaped chars. recommended to be a callback]
 :: then call :check_async to wait for all to finish 
-if defined check_async ( set /a "set_timeout+=1" & goto :set_timeout_a ) 
+if defined check_async ( set /a "set_timeouty+=1" & goto :set_timeout_a ) 
+@REM set foo="%~dp0foo"
 set foo="foo"
-set /a "set_timeout=1"
+set /a "set_timeouty=1"
+set /a "set_timeoutx=0"
+call %write% %foo% %set_timeoutx%
+
+set "task_id="
+
+
 
 :set_timeout_a
 set "args=%*"
 if not defined args goto :eo_set_timeout
-
-
-setlocal enabledelayedexpansion
-set "task_id_%set_timeout%=%random%"
+setlocal enabledelayedexpansion       
 for /F "tokens=1,* delims= " %%a in ("%args%") do (
-    set "t=%%a"
-	set "command=%%b"
+    endlocal & ( set "t=%%a" & set "command=%%b")
 ) 
-
+call %read% %foo%
+set "set_timeoutx=%io%"
+call :debug before timeout %set_timeoutx% 
+start /b cmd /v:on /c "timeout /t %t% /nobreak >nul && (%command%) && (set /p "x="<%foo% & set /a "x=^!x^!+1" & call %write% %foo% ^!x^!)"
 set "check_async=v"
-start /b cmd /v:on /c "timeout /t !t! /nobreak >nul && (!command!) && (call %append% %foo% !task_id_%set_timeout%!)"
-
-for %%a in (task_id_%set_timeout%) do (
-  set "x=set "%%a=!%%a!""
-  )
-
-endlocal & %x% & set "check_async=v"
-echo ------------------------------------------------------------------------------------------------------
+call %read% %foo%
+set "set_timeoutx=%io%"
+call :debug after timeout after fetch  %set_timeoutx% 
 goto :eo_set_timeout
 
 :check_async
-setlocal enabledelayedexpansion
-for /f "usebackq delims=" %%a in (%foo%) do (
-	set "line=%%a"
-	set "progress_id=!progress_id!!line!"
-)
-echo !progress_id!
-
-for /l %%a in (1,1,%set_timeout%) do (
-	for /f "tokens=*" %%b in ('set task_id_%%a') do ( set "task_id=%%b" )
-	echo !task_id!
-	pause
-	(
-	echo !progress_id! | find /i "!task_id!"
-	) && (
-		set "check_async="
-		del %foo% >nul 2>nul
-		goto :eo_set_timeout
-	) || (
-		timeout /t 4 /nobreak >nul 2>nul
-		goto :check_async
-	)
+call %read% %foo%
+set "set_timeoutx=%io%"
+call :debug checking async tasks %set_timeoutx% of %set_timeouty%
+if %set_timeoutx% equ %set_timeouty% (
+	set "check_async="
+	del %foo% >nul 2>nul
+	goto :eo_set_timeout
+) else (
+	timeout /t 4 /nobreak >nul 2>nul
+	goto :check_async
 )
 :eo_set_timeout
-endlocal
 exit /b
 
 
