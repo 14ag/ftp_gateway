@@ -27,7 +27,8 @@ set "append="%~f0" :io ww"
 :: FTP Configuration
 set PHONE_IP=
 set NETWORK_TYPE=
-set LOGPATH=%userprofile%\desktop\
+@REM set LOGPATH=%userprofile%\desktop\
+set LOGPATH=%userprofile%\sauce\batch_scripts\ftp_gateway\
 set "INI=%USERPROFILE%\Desktop\ftp_settings.ini"
 del foo
 del found
@@ -56,10 +57,10 @@ if not exist "%INI%" (
     pause >nul
 )
 
-for /f "usebackq delims=" %%A in ("%INI%") do (
-	set "line=%%A"
+for /f "usebackq delims=" %%a in ("%INI%") do (
+	set "line=%%a"
 
-	for /f "tokens=* delims= " %%B in ("!line!") do set "line=%%B"
+	for /f "tokens=* delims= " %%b in ("!line!") do set "line=%%b"
 
 		if defined line (
 		set "firstChar=!line:~0,1!"
@@ -69,12 +70,12 @@ for /f "usebackq delims=" %%A in ("%INI%") do (
 				echo "!line!" | findstr /c:"=" >nul
 				if not errorlevel 1 (
 
-				for /f "tokens=1* delims==" %%K in ("!line!") do (
-					set "value=%%L"
-					for /f "tokens=* delims=" %%Y in ("!value!") do set "value=%%Y"
+				for /f "tokens=1* delims==" %%c in ("!line!") do (
+					set "value=%%d"
+					for /f "tokens=* delims=" %%e in ("!value!") do set "value=%%e"
 					
-					set "key=%%K"
-					for /f "tokens=* delims= " %%X in ("!key!") do set "key=%%X"
+					set "key=%%c"
+					for /f "tokens=* delims= " %%e in ("!key!") do set "key=%%e"
 					set "keys=!keys! !key!"
 					set "!key!=!value!"
 )	)	)	)	)
@@ -136,11 +137,11 @@ echo  please wait...
 for %%a in (%get_gateways%) do (
 	for /f "tokens=1-2 delims=_" %%b in ("%%a") do (
 
-		call :debug scanning network type %%b with gateway %%c
+		call :debug scanning %%b with gateway %%c
 
 		echo scanning the %%b gateway for ftp servers
 
-		call :debug attempting connection with ip %%c
+		call :debug attempting connection to ip %%c
 
 		(
 		call :connect %%c && goto :eof
@@ -164,16 +165,16 @@ for %%a in (%get_gateways%) do (
 cls
 		call :debug network bits: !network_bits!
 		
-		call :set_timeout 1 %ping_handler% 4-5 %%c !network_bits!
+		call :set_timeout 1 %ping_handler% 4-15 %%c !network_bits!
 			
-		call :set_timeout 2 %ping_handler% 10-11 %%c !network_bits!
+		call :set_timeout 2 %ping_handler% 19-26 %%c !network_bits!
 		
 		call :check_async
-
+		
 		for /f "usebackq tokens=* delims=" %%d in ("%found_ips%") do (
 			for %%e in (%%d) do (
 				echo _%%e_
-				call :connect && goto :eof
+				@REM call :connect && goto :eof
 			)
 			
 		)
@@ -181,8 +182,11 @@ cls
 
 	)
 )
+pause
+exit /b
+exit /b
+exit /b
 endlocal
-echo xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 
 
@@ -399,8 +403,9 @@ arp -a | find /i "%macAddress%" >nul
 exit /b
 
 
+
 :debug
-@exit /b 0>nul
+@REM @exit /b 0>nul
 if "%debug%"=="0" goto :eo_debug
 if not defined debug goto :eo_debug
 set "log=%*"
@@ -454,25 +459,25 @@ goto :eo_set_timeout
 setlocal enabledelayedexpansion
 for /f "usebackq delims=" %%a in (%foo%) do (
 	set "line=%%a"
-	set "progress_id=!progress_id!!line!"
+	set "progress_id=!line!!progress_id!"
 )
 echo !progress_id!
 
 for /l %%a in (1,1,%set_timeout%) do (
-	for /f "tokens=*" %%b in ('set task_id_%%a') do ( set "task_id=%%b" )
-	echo !task_id!
-	pause
+	for /f "tokens=2 delims==" %%b in ('set task_id_%%a') do ( set "task_id=%%b" )
+	echo !task_id! ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	(
-	echo !progress_id! | find /i "!task_id!"
+	echo !progress_id! | find "!task_id!"
 	) && (
-		set "check_async="
-		del %foo% >nul 2>nul
-		goto :eo_set_timeout
+		call :debug !task_id! found in !progress_id!
 	) || (
+		call :debug waiting for task !task_id!
 		timeout /t 4 /nobreak >nul 2>nul
 		goto :check_async
 	)
 )
+set "check_async="
+del %foo% >nul 2>nul
 :eo_set_timeout
 endlocal
 exit /b
