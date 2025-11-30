@@ -4,6 +4,8 @@ make the getconfig handle passwords with special characters
 use size of debug.log to make loading bar
 make gatewway vbs return hotspot gateway first in the array
 replace "rem rem cls" with "cls"
+reframe the debug and console logs
+reduce timeout durations
 
 changelog
 fixed debug logs directory

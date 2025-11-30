@@ -405,7 +405,7 @@ exit /b
 
 
 :debug
-@REM @exit /b 0>nul
+@exit /b 0>nul
 if "%debug%"=="0" goto :eo_debug
 if not defined debug goto :eo_debug
 set "log=%*"
@@ -429,7 +429,7 @@ exit /b 0>nul
 :: usage call :set_timeout [time in sec.] [single line command with escaped chars. recommended to be a callback]
 :: then call :check_async to wait for all to finish 
 if defined check_async ( set /a "set_timeout+=1" & goto :set_timeout_a ) 
-set foo="foo"
+set foo="%~dp0foo"
 set /a "set_timeout=1"
 
 :set_timeout_a
@@ -445,7 +445,7 @@ for /F "tokens=1,* delims= " %%a in ("%args%") do (
 ) 
 
 set "check_async=v"
-start /b cmd /v:on /c "timeout /t !t! /nobreak >nul && (!command!) && (call %append% %foo% !task_id_%set_timeout%!)"
+start /b cmd /v:on /c "timeout /t !t! /nobreak >nul && (!command!) & (call %append% %foo% !task_id_%set_timeout%!)"
 
 for %%a in (task_id_%set_timeout%) do (
   set "x=set "%%a=!%%a!""
@@ -457,9 +457,18 @@ goto :eo_set_timeout
 
 :check_async
 setlocal enabledelayedexpansion
+if not exist "foo" (
+	call :debug waiting no task completed yet
+	timeout /t 1 /nobreak >nul 2>nul
+	goto :check_async
+)
 for /f "usebackq delims=" %%a in (%foo%) do (
 	set "line=%%a"
-	set "progress_id=!line!!progress_id!"
+	(
+	echo !progress_id! | find "!line!"
+	) || (
+		set "progress_id=!line!!progress_id!"
+		)
 )
 echo !progress_id!
 
@@ -472,7 +481,7 @@ for /l %%a in (1,1,%set_timeout%) do (
 		call :debug !task_id! found in !progress_id!
 	) || (
 		call :debug waiting for task !task_id!
-		timeout /t 4 /nobreak >nul 2>nul
+		timeout /t 6 /nobreak >nul 2>nul
 		goto :check_async
 	)
 )
