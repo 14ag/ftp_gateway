@@ -1,34 +1,49 @@
-@echo off
-
-set "args=%*"
-for /F "tokens=1,* delims= " %%a in ("%args%") do (
-    endlocal & ( set "function=%%a" & set "args=%%b")
+@REM @echo off
+:: there is a pause at the end of the script
+cls
+set user_ip_address=1.2.3.4
+for /f "tokens=4 delims=." %%a in ("%user_ip_address%") do (
+    set "host=%%a"
 )
-
-if defined function call :%function% %args% & exit /b
-
-
-set "read="%~f0" io r"
-set "write="%~f0" io w"
-
-
-call %read% qwertyui
-
-pause
-exit /b
-
-:io
-set "x=%1 __ %2"
-echo %x%
-exit /b
+echo %host%
 
 
 
-set x=q.w.e.rtyui
+
+
+
+
+
+
+@REM set "args=%*"
+@REM for /F "tokens=1,* delims= " %%a in ("%args%") do (
+@REM     endlocal & ( set "function=%%a" & set "args=%%b")
+@REM )
+
+@REM if defined function call :%function% %args% & exit /b
+
+
+@REM set "read="%~f0" io r"
+@REM set "write="%~f0" io w"
+
+
+@REM call %read% qwertyui
+
+@REM pause
+@REM exit /b
+
+@REM :io
+@REM set "x=%1 __ %2"
+@REM echo %x%
+@REM exit /b
+
+
+
+@REM set x=q.w.e.rtyui
 
 ::learn trancating.this shows char[0] to char[StringLength-1]
-set y=%x:~0,-1% 
-echo y="%y%"
+@REM set y=%x:~0,-1% 
+@REM echo y="%y%"
 
 :: learn parse into four tokens using "." as delimiter
 @REM for /f "tokens=1-4 delims=." %%a in ("%x%") do (

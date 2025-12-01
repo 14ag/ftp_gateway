@@ -8,6 +8,7 @@ reduce timeout durations
 optimize search ranges
 
 changelog
+refactored manual input
 exit code for :connect
 fix multithread ip search
 fixed debug logs directory
