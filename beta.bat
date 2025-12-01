@@ -363,7 +363,7 @@ exit /b 0
 set "get_gateways="
 for /f "delims=" %%a in ('cscript //NoLogo "GetGateways.vbs"') do set "get_gateways=%%a" >nul
 call :debug :get_gateways result: %get_gateways%
-exit /b
+exit /b %errorlevel%
 	
 
 :reset_choice
@@ -382,7 +382,7 @@ for /f "tokens=1-4 delims=." %%a in ("%ip%") do (
 	set network_bits=%%a.%%b.%%c
 )
 call :debug :network_bits result: %network_bits%
-exit /b
+exit /b %errorlevel%
 
 
 :macAddress_lookup
@@ -398,8 +398,9 @@ arp -a | find /i "%macAddress%" >nul
 	) || (
 	:: phone not found in arp table
 	set "macAddress_lookup="
+	exit /b 1
 	)
-exit /b
+exit /b 0
 
 
 
@@ -422,7 +423,7 @@ if not defined newLogFile (
 	echo %tstamp% : %log% >> %LOGPATH%debug.log
 )
 :eo_debug 
-exit /b 0 >nul
+@exit /b 0 >nul 2>&1
 
 
 
@@ -448,11 +449,11 @@ for /F "tokens=1,* delims= " %%a in ("%args%") do (
 ) 
 
 set "check_async=v"
-start /b cmd /v:on /c "timeout /t !t! /nobreak >nul && (!command!) & (call %append% %foo% !task_id_%set_timeout%!)"
+start /b cmd /v:on /c "timeout /t !t! /nobreak >nul & (!command!) && (call %append% %foo% !task_id_%set_timeout%!)"
 
 for %%a in (task_id_%set_timeout%) do (
   set "x=set "%%a=!%%a!""
-  )
+)
 
 endlocal & %x% & set "check_async=v"
 goto :eo_set_timeout
@@ -467,7 +468,7 @@ if not exist "foo" (
 for /f "usebackq delims=" %%a in (%foo%) do (
 	set "line=%%a"
 	(
-	echo !progress_id! | find "!line!"
+	echo !progress_id! | find "!line!" >nul
 	) || (
 		set "progress_id=!line!!progress_id!"
 		)
@@ -485,11 +486,12 @@ for /l %%a in (1,1,%set_timeout%) do (
 		goto :check_async
 	)
 )
+
 set "check_async="
 @REM del %foo% >nul 2>&1
 :eo_set_timeout
 endlocal
-exit /b
+exit /b 0
 
 
 
