@@ -5,9 +5,10 @@ make gatewway vbs return hotspot gateway first in the array
 replace "rem rem cls" with "cls"
 reframe the debug and console logs
 reduce timeout durations
-
+optimize search ranges
 
 changelog
+exit code for :connect
 fix multithread ip search
 fixed debug logs directory
 scans gateways first before each ip
