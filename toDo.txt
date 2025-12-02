@@ -6,8 +6,11 @@ replace "rem rem cls" with "cls"
 reframe the debug and console logs
 reduce timeout durations
 optimize search ranges
+swap phoneip with the other var name
+remove test lines
 
 changelog
+further documentation of functions
 refactored manual input
 exit code for :connect
 fix multithread ip search
