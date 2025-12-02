@@ -1,3 +1,4 @@
+::test
 @echo off
 
 
@@ -13,14 +14,16 @@ if defined function call %function% %args% & exit /b
 
 
 
+
 :: tool config
 title FTP 
 prompt $g$g$s
 set "lines=20"
 :: test
-@REM mode con: cols=60 lines=%lines%
+REM mode con: cols=60 lines=%lines%
 del foo >nul 2>&1
 del found >nul 2>&1
+set "newLogFile="
 set "read="%~f0" :io r"
 set "write="%~f0" :io w"
 set "append="%~f0" :io ww"
@@ -29,7 +32,7 @@ set "append="%~f0" :io ww"
 :: init
 set "ip_address="
 :: test
-@REM set LOGPATH=%userprofile%\desktop\
+REM set LOGPATH=%userprofile%\desktop\
 set LOGPATH=%userprofile%\sauce\batch_scripts\ftp_gateway\
 set "INI=%USERPROFILE%\Desktop\ftp_settings.ini"
 
@@ -92,7 +95,14 @@ call :debug initial parameters: FTP_USER=%FTP_USER% FTP_PASS=%FTP_PASS% FTP_PORT
 
 ::==================================================================================================================================================
 ::test
-goto :method_4
+goto :method_3
+
+
+
+
+
+
+
 
 
 
@@ -160,6 +170,37 @@ call :connect && goto :eof
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :method_2
 :: search ip in the local subnet by pinging all possible ips
 set "ip_address="
@@ -170,12 +211,12 @@ call :debug starting ip scan
 
 call :debug fetching gateways
 
-call :get_gateways
+call :get_gateway
 
-call :debug detected gateways: %get_gateways%
+call :debug detected gateways: %get_gateway%
 
 echo  please wait...
-for /f "tokens=1-2 delims=_" %%a in ("%get_gateways%") do (
+for /f "tokens=1-2 delims=_" %%a in ("%get_gateway%") do (
 
 	call :debug scanning %%a with gateway %%b
 
@@ -192,7 +233,7 @@ for /f "tokens=1-2 delims=_" %%a in ("%get_gateways%") do (
 
 
 setlocal enabledelayedexpansion
-for /f "tokens=1-2 delims=_" %%a in ("%get_gateways%") do (
+for /f "tokens=1-2 delims=_" %%a in ("%get_gateway%") do (
 	call :debug scanning network type %%a with gateway %%b
 
 	echo scanning the %%a for ftp servers
@@ -234,6 +275,54 @@ goto :menu
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :method_3
 :: method 3 - quick input ip adress
 set "ip_address="
@@ -241,22 +330,14 @@ set "ip_address="
 setlocal enabledelayedexpansion
 call :debug starting method 3 quick manual input
 
-call :formatting 6
+call :formatting 6 switching to manual input mode.
 
-echo switching to manual input mode.
 echo.
-call :get_gateways
+call :get_gateway
 
-call :debug gateways found 
+call :debug user selected !NETWORK_TYPE! gateway=!get_gateway!
 
-for /f "tokens=1-2 delims= " %%a in ("%get_gateways%") do (
-    set "NETWORK_TYPE=%%a"
-     set "IP=%%b"
-    )
-
-call :debug user selected !NETWORK_TYPE! gateway=!get_gateways!
-
-call :network_bits !get_gateways!
+call :network_bits !get_gateway!
 
 set /p "host_bits=enter the last digits !network_bits!."
 call :debug user entered host_bits: %host_bits%
@@ -264,40 +345,81 @@ call :debug user entered host_bits: %host_bits%
 set "ip_address=%network_bits%.%host_bits%"
 call :debug ip_address: %ip_address%
 
-(
-call :connect %ip_address% && goto :eof
-) || (
-	echo no ftp servers could be found on %ip_address%.
-	goto :method_4
+::test
+for /f "tokens=4 delims=." %%a in ("%ip_address%") do (
+    set "host=%%a"
 	)
+
+(
+	::test
+	rem call :connect %ip_address% && goto :eof
+	call :connect %host% && goto :eof
+	) || (
+		echo no ftp servers could be found on %ip_address%
+		pause
+		goto :method_4
+		)
+endlocal
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 :method_4
 :: method 4 - direct input of full phone ip address, im so sorry this is what i tried to avoid pls forgive me
 call :debug starting direct input
-
-echo im so sorry this is what i tried to avoid 
+call :formatting 5 im so sorry this is what i tried to avoid
+:input
 echo.
 set /p "user_ip_address=just enter the full ip address of the phone:"
-call :network_bits %user_ip_address%
-::test
-@REM get_gateways=wifi_192.168.600.1 lan_192.168.900.1
-set "UIA_network_bits=%network_bits%"
-call :debug user input network bits %UIA_network_bits%
+call :network_bits %user_ip_address% 
 
-if not defined get_gateways (
-    call :get_gateways
-	) 
+set "UIP_network_bits=%network_bits%"
+call :debug user input network bits %UIP_network_bits%
 
-call :network_bits %get_gateways%
+call :get_gateway
 
-call :debug user device gateway %get_gateways%
+call :network_bits %get_gateway%
 
-if not "%UIA_network_bits%"=="%network_bits%" ( 
-	call :method_4a it seems like your phone and pc are not on the same network
+call :debug user device gateway %get_gateway%
+
+if not "%UIP_network_bits%"=="%network_bits%" ( 
+	call :formatting 4 it seems like your phone and pc are not on the same network
+	goto :input
 	)
 
+::test
 for /f "tokens=4 delims=." %%a in ("%user_ip_address%") do (
     set "host=%%a"
 	)
@@ -305,12 +427,12 @@ for /f "tokens=4 delims=." %%a in ("%user_ip_address%") do (
 call :debug pinging %user_ip_address%
 
 (
-call :ping_handler %get_gateways% %UIA_network_bits% %host%-%host%
+call :ping_handler %get_gateway% %UIP_network_bits% %host%-%host%
 ) && (
 	echo. >nul
 	(
         ::test
-		@REM call :connect %user_ip_address% && goto :eof
+		REM call :connect %user_ip_address% && goto :eof
 		call :connect %host% && goto :eof
 
 	) || (
@@ -321,6 +443,7 @@ call :ping_handler %get_gateways% %UIA_network_bits% %host%-%host%
 	)
 
 :method_4a
+
 call :formatting 5
 
 echo %*
@@ -332,6 +455,33 @@ if /i "%selector%"=="quick input" goto :method_3
 if /i "%selector%"=="try again" goto :method_4
 if /i "%selector%"=="auto mode" goto :method_2a
 goto :menu
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -370,7 +520,7 @@ set "ip_address=%*"
 :: (search) && ((found) && (killed) || (unkilled)) || (unfound)
 (
 	::test
-	@REM call :check_ftp %ip_address% %FTP_PORT%
+	REM call :check_ftp %ip_address% %FTP_PORT%
 	call :check_ftp_simulator %ip_address%
 
 ) && ( 
@@ -378,7 +528,7 @@ set "ip_address=%*"
 	::test
 	msg * /server:127.0.0.1 /w "connected to ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT%"
 	::test
-	@REM explorer ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT% >nul
+	REM explorer ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT% >nul
 	call :debug ftp server found on %ip_address%
 
 	exit /b 0
@@ -387,6 +537,20 @@ set "ip_address=%*"
 		call :debug no ftp on %ip_address%
 		exit /b 1		 
 		)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -433,6 +597,21 @@ exit /b
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :check_ftp
 :: Usage: check_ftp <IP_address> <PORT>
 :: returns errorlevel 0 if ftp server is reachable and 1 if not
@@ -446,19 +625,27 @@ exit /b %errorlevel%
 
 
 
-:get_gateways
-:: use call :get_gateways
+
+
+
+
+
+
+
+
+
+:get_gateway
+:: use call :get_gateway
 :: returns an array of gateways of your pc in format [abc_123.123.123.123 xyz_456.456.456.456]
 
 setlocal enabledelayedexpansion
-set "get_gateways="
+set "get_gateway="
 ::test
-@REM for /f "delims=" %%a in ('cscript //NoLogo "GetGateways.vbs"') do set "get_gateways=%%a" >nul
-set "get_gateways=wifi_192.168.600.1 lan_192.168.900.1"
-call :debug :get_gateways result: %get_gateways%
+REM for /f "delims=" %%a in ('cscript //NoLogo "GetGateways.vbs"') do set "get_gateway=%%a" >nul
+set "get_gateway=wifi_192.168.600.1 lan_192.168.900.1"
 
 set /a "count=0"
-for %%a in (%get_gateways%) do (
+for %%a in (%get_gateway%) do (
 	set /a "count+=1"
     )
 
@@ -466,7 +653,7 @@ if %count% gtr 1 (
 
 	call :debug multiple gateways found, prompting user for selection
 	set "x="
-	for %%a in (%get_gateways%) do (
+	for %%a in (%get_gateway%) do (
 		for /f "tokens=1-2 delims=_" %%b in ("%%a") do (
 			set "x=%%b %%c,!x!"
 		)
@@ -480,11 +667,26 @@ if %count% gtr 1 (
     call :selector !x!
 	)
 
-for /F "tokens=* delims= " %%a in ("!selector!") do (
-    endlocal & set "get_gateways=%%a" 
+for /F "tokens=2 delims= " %%a in ("!selector!") do (
+    endlocal & set "get_gateway=%%a" 
 	)
 
+call :debug :get_gateway result: %get_gateway%
 exit /b %errorlevel%
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -499,6 +701,18 @@ for /f "tokens=1-4 delims=." %%a in ("%ip%") do (
 call :debug :network_bits result: %network_bits%
 
 exit /b %errorlevel%
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -521,6 +735,20 @@ exit /b 0
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :selector
 :: creates a dynamic list of choices from a command that outputs a list
 :: & is just a command separator, while && is a conditional operator
@@ -532,7 +760,7 @@ set "i=0"
 set "choicelist="
 :: Replace every comma with a quote, a space, and another quote (" ") and Wrap the entire resulting string in quotes
 set "arg_list="%arg_string:,=" "%""
-@rem Loop through the new quoted, space-separated list
+rem Loop through the new quoted, space-separated list
 for %%a in (%arg_list%) do (
 	set /a i+=1
 
@@ -562,6 +790,11 @@ exit /b 0
 
 
 
+
+
+
+
+
 :reset_choice
 :: reset errorlevel for correct choice
 :: use immediately before choice command
@@ -570,9 +803,20 @@ exit /b 0
 
 
 
+
+
+
+
+
+
+
+
+
+
 :debug
-::define %logpath% before your code
-@REM @exit /b 0 >nul 2>&1
+::define "logpath" and "newLogFile=" before your code
+::test
+REM @exit /b 0 >nul 2>&1
 
 if "%debug%"=="0" @exit /b 0 >nul 2>&1
 if not defined debug @exit /b 0 >nul 2>&1
@@ -593,6 +837,14 @@ if not defined newLogFile (
 		echo %tstamp% : %log% >> %LOGPATH%debug.log
 	)
 @exit /b 0 >nul 2>&1
+
+
+
+
+
+
+
+
 
 
 
@@ -658,10 +910,22 @@ for /l %%a in (1,1,%set_timeout%) do (
 
 set "check_async="
 ::test
-@REM del %foo% >nul 2>&1
+REM del %foo% >nul 2>&1
 :eo_set_timeout
 endlocal
 exit /b 0
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -710,20 +974,49 @@ exit /b
 
 
 
+
+
+
+
+
+
+
+
+
+
 :formatting
 :: formatting just because
 :: Usage: formatting <number_of_blank_lines>
+::test
+pause
 cls
 set "args=%*"
-set /a spacing=%lines%-%args%
-set /a spacing=%spacing%/2
-for /L %%a in (1,1,%spacing%) do echo.
+for /F "tokens=1,* delims= " %%a in ("%args%") do (
+    set "n=%%a" 
+    set "i=%%b" 
+	)
+set /a spacing=(%lines%-%n%)/2
+for /L %%a in (1,1,%spacing%) do (
+	if %%a equ %spacing% (
+		echo %i%
+	) else (
+		echo.
+	)
+)
 exit /b 0
+
+
 
 
 
 :error
 exit /b 1
+
+
+
+
+
+
 
 
 :ping_simulator
@@ -744,10 +1037,10 @@ if %dds% equ 1 (
 ::test
 :: filters hosts divisible by %n%
 set "args=%*"
-set "n=6"
+set "n=7"
 set /a "ddd=args/%n%"
 set /a "dds=args-(ddd*%n%)"
-if %dds% equ 1 (
+if %dds% equ 0 (
 	exit /b 0
 	) else (
 		exit /b 1

@@ -5,16 +5,22 @@ reframe the debug and console logs
 replace "rem rem cls" with "cls"
 reduce timeout durations
 optimize search ranges
+fix method_1 logic
 remove test lines
 
-changelog
+ongoing:
+refactor method to to comply with changelog
+
+
+changelog:
 code formatting
 exit code for :connect
-refactored manual input
 add getConfig() function
 fix multithread ip search
 fixed debug logs directory
+geting gateways to return ip only
 further documentation of functions
 scans gateways first before each ip
 swap phoneip with the other var name
 gateway selection if multiple are connected
+refactored and test pass both manual input methods
