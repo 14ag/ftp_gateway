@@ -10,6 +10,7 @@ swap phoneip with the other var name
 remove test lines
 
 changelog
+code formatting
 further documentation of functions
 refactored manual input
 exit code for :connect

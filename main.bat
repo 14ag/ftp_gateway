@@ -8,6 +8,7 @@ set "args=%*"
 for /F "tokens=1,* delims= " %%a in ("%args%") do (
     endlocal & ( set "function=%%a" & set "args=%%b")
 )
+
 if defined function call %function% %args% & exit /b
 
 
@@ -25,7 +26,7 @@ set "write="%~f0" :io w"
 set "append="%~f0" :io ww"
 
 
-:: FTP Configuration
+:: init
 set "ip_address="
 :: test
 @REM set LOGPATH=%userprofile%\desktop\
@@ -43,7 +44,7 @@ if not exist "%INI%" (
       echo FTP_PORT=
 	  echo.
       echo ; mac address format xx-xx-xx-xx-xx-xx
-      echo PHONE_MAC=
+      echo MAC_ADDRESS=
 	  echo.
       echo ; set debug to 0 for off or 1 to get log file on your desktop folder
       echo debug=
@@ -87,21 +88,54 @@ for %%a in (!keys:~1!) do (
 set "x=%x:~3%"
 endlocal & %x%
 
-call :debug initial parameters: FTP_USER=%FTP_USER% FTP_PASS=%FTP_PASS% FTP_PORT=%FTP_PORT% PHONE_MAC=%PHONE_MAC%
+call :debug initial parameters: FTP_USER=%FTP_USER% FTP_PASS=%FTP_PASS% FTP_PORT=%FTP_PORT% mac_address=%mac_address%
 
 ::==================================================================================================================================================
 ::test
 goto :method_4
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :method_1
-call :formatting 8
-echo detecting phone ip ...this won't take long
 :: detecting phone ip from arp table using mac address
-if not defined PHONE_MAC echo setup PHONE_MAC for fast connection & goto method_2
+call :formatting 8
+
+echo detecting phone ip ...this won't take long
+if not defined mac_address echo setup mac_address for fast connection & goto method_2
 set "macAddress_lookup="
 if not defined macAddress_lookup (
-	call :debug searching ARP table for MAC address %PHONE_MAC%
-	call :macAddress_lookup %PHONE_MAC%
+	call :debug searching ARP table for MAC address %mac_address%
+
+	call :macAddress_lookup %mac_address%
 )
 call :debug result of MAC address detection: %macAddress_lookup%
 
@@ -110,9 +144,9 @@ if not defined macAddress_lookup (
 	goto :method_2
 )
 
-set "PHONE_IP=%macAddress_lookup%"
+set "ip_address=%macAddress_lookup%"
 
-call :debug attempting to connect with ip %PHONE_IP%
+call :debug attempting to connect with ip %ip_address%
 (
 call :connect && goto :eof
 ) || (
@@ -140,59 +174,52 @@ call :get_gateways
 
 call :debug detected gateways: %get_gateways%
 
-set "count=0"
-for %%a in (%get_gateways%) do (
-	set /a count+=1
-)
-
 echo  please wait...
+for /f "tokens=1-2 delims=_" %%a in ("%get_gateways%") do (
 
-for %%a in (%get_gateways%) do (
-	for /f "tokens=1-2 delims=_" %%b in ("%%a") do (
+	call :debug scanning %%a with gateway %%b
 
-		call :debug scanning %%b with gateway %%c
+	echo scanning the %%a gateway for ftp servers
 
-		echo scanning the %%b gateway for ftp servers
+	call :debug attempting connection to ip %%b
 
-		call :debug attempting connection to ip %%c
-
-		(
-		call :connect %%c && goto :eof
-		) || (
-			call :debug no ftp servers could be found on %%c
-		)
+	(
+		call :connect %%b && goto :eof
+	) || (
+		call :debug no ftp servers could be found on %%b
 	)
 )
+
 
 setlocal enabledelayedexpansion
-set /a "i=0"
-for %%a in (%get_gateways%) do (
-	set /a i+=1
-	for /f "tokens=1-2 delims=_" %%b in ("%%a") do (
+for /f "tokens=1-2 delims=_" %%a in ("%get_gateways%") do (
+	call :debug scanning network type %%a with gateway %%b
 
-		call :debug scanning network type %%b with gateway %%c
+	echo scanning the %%a for ftp servers
+	call :network_bits %%b
 
-		echo scanning the %%b for ftp servers
+	call :debug network bits: !network_bits!
+	
+	call :set_timeout 1 %ping_handler% %%b !network_bits! 1-50
 
-		call :network_bits %%c
+	call :set_timeout 1 %ping_handler% %%b !network_bits! 51-100
 
-		call :debug network bits: !network_bits!
-		
-		call :set_timeout 1 %ping_handler% %%c !network_bits! 1-50 
-		call :set_timeout 1 %ping_handler% %%c !network_bits! 51-100 
-		call :set_timeout 1 %ping_handler% %%c !network_bits! 101-150 
-		call :set_timeout 1 %ping_handler% %%c !network_bits! 151-200 
-		call :set_timeout 1 %ping_handler% %%c !network_bits! 201-254 
-		call :check_async
-		for /f "usebackq tokens=* delims=" %%d in ("%found_ips%") do (
-			for %%e in (%%d) do (
-				call :connect %%e && goto :eof
-			)
-			
+	call :set_timeout 1 %ping_handler% %%b !network_bits! 101-150
+
+	call :set_timeout 1 %ping_handler% %%b !network_bits! 151-200
+
+	call :set_timeout 1 %ping_handler% %%b !network_bits! 201-254
+
+	call :check_async
+
+	for /f "usebackq tokens=* delims=" %%c in ("%found_ips%") do (
+		for %%d in (%%c) do (
+			call :connect %%d && goto :eof
 		)
-
-
+		
 	)
+
+
 )
 endlocal
 
@@ -210,6 +237,7 @@ goto :menu
 :method_3
 :: method 3 - quick input ip adress
 set "ip_address="
+
 setlocal enabledelayedexpansion
 call :debug starting method 3 quick manual input
 
@@ -217,48 +245,23 @@ call :formatting 6
 
 echo switching to manual input mode.
 echo.
-
 call :get_gateways
 
-call :debug gateways found "%get_gateways%"
+call :debug gateways found 
 
-set /a "count=0"
-for %%a in (%get_gateways%) do (
-	set /a "count+=1"
+for /f "tokens=1-2 delims= " %%a in ("%get_gateways%") do (
+    set "NETWORK_TYPE=%%a"
+     set "IP=%%b"
     )
 
-if %count% gtr 1 (
-	call :debug multiple gateways found, prompting user for selection
-	set "x="
-	for %%a in (%get_gateways%) do (
-		for /f "tokens=1-2 delims=_" %%b in ("%%a") do (
-			set "x=%%b %%c,!x!"
-		)
-	)
-
-    :: removing trailing comma
-    if defined x set "x=!x:~0,-1!"
-    echo  select the network your ftp server is connected to:
-    call :debug starting :selector !x!
-    call :selector !x!
-    for /f "tokens=1-2 delims= " %%a in ("!selector!") do (
-        set "NETWORK_TYPE=%%a"
-        set "IP=%%b"
-        )
-)
-
-
-set "get_gateways=!IP!"
 call :debug user selected !NETWORK_TYPE! gateway=!get_gateways!
 
 call :network_bits !get_gateways!
 
 set /p "host_bits=enter the last digits !network_bits!."
-
 call :debug user entered host_bits: %host_bits%
 
 set "ip_address=%network_bits%.%host_bits%"
-
 call :debug ip_address: %ip_address%
 
 (
@@ -270,7 +273,6 @@ call :connect %ip_address% && goto :eof
 
 
 
-
 :method_4
 :: method 4 - direct input of full phone ip address, im so sorry this is what i tried to avoid pls forgive me
 call :debug starting direct input
@@ -278,22 +280,27 @@ call :debug starting direct input
 echo im so sorry this is what i tried to avoid 
 echo.
 set /p "user_ip_address=just enter the full ip address of the phone:"
-
 call :network_bits %user_ip_address%
-
+::test
+@REM get_gateways=wifi_192.168.600.1 lan_192.168.900.1
 set "UIA_network_bits=%network_bits%"
+call :debug user input network bits %UIA_network_bits%
+
 if not defined get_gateways (
     call :get_gateways
-) 
+	) 
 
 call :network_bits %get_gateways%
+
+call :debug user device gateway %get_gateways%
+
 if not "%UIA_network_bits%"=="%network_bits%" ( 
 	call :method_4a it seems like your phone and pc are not on the same network
 	)
 
 for /f "tokens=4 delims=." %%a in ("%user_ip_address%") do (
     set "host=%%a"
-)
+	)
 
 call :debug pinging %user_ip_address%
 
@@ -302,7 +309,10 @@ call :ping_handler %get_gateways% %UIA_network_bits% %host%-%host%
 ) && (
 	echo. >nul
 	(
-        call :connect %user_ip_address% && goto :eof
+        ::test
+		@REM call :connect %user_ip_address% && goto :eof
+		call :connect %host% && goto :eof
+
 	) || (
 		call :method_4a ftp server not found on %user_ip_address%
 	)
@@ -312,9 +322,11 @@ call :ping_handler %get_gateways% %UIA_network_bits% %host%-%host%
 
 :method_4a
 call :formatting 5
+
 echo %*
 echo.
 call :selector try again,quick input,auto mode,exit
+
 if /i "%selector%"=="exit" goto :eof
 if /i "%selector%"=="quick input" goto :method_3
 if /i "%selector%"=="try again" goto :method_4
@@ -325,19 +337,24 @@ goto :menu
 
 :menu
 call :formatting 7
+
 echo  menu
 call :selector method 1  fast search,method 2  slow search,method 3  quick input,method 4  manual input,exit
+
 if /i "%selector%"=="exit" goto :eof
 for /f "tokens=2 delims= " %%a in ("%selector%") do (
+
 	echo.
 	echo you selected %selector%
 	echo method_%%a
 	pause
 	goto :method_%%a
-)
+	)
 
 call :error
+
 call :formatting 1
+
 echo something went wrong
 start notepad.exe %LOGPATH%
 pause & exit
@@ -349,18 +366,21 @@ pause & exit
 :connect
 :: define %FTP_PORT%
 :: use connect [ip address]
-set "ip_address=%*" 
+set "ip_address=%*"
 :: (search) && ((found) && (killed) || (unkilled)) || (unfound)
-( 
+(
 	::test
-	call :check_ftp_simulator %ip_address% %FTP_PORT% 
+	@REM call :check_ftp %ip_address% %FTP_PORT%
+	call :check_ftp_simulator %ip_address%
+
 ) && ( 
 	::ftp server found
 	::test
-	msg * /server:127.0.0.1 /w "ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT%"
+	msg * /server:127.0.0.1 /w "connected to ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT%"
 	::test
 	@REM explorer ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT% >nul
 	call :debug ftp server found on %ip_address%
+
 	exit /b 0
 	) || ( 
 		::ftp server not found
@@ -373,6 +393,7 @@ set "ip_address=%*"
 :ping_handler
 :: use call :ping_handler [#start-stop] [gateway] [networkbits]
 set "args=%*"
+
 setlocal enabledelayedexpansion       
 for /F "tokens=1,2,3 delims= " %%a in ("%args%") do (
 
@@ -391,11 +412,14 @@ for /l %%a in (%start%,1,%stop%) do (
 		) && (
 		:: if ping successful
 		call :debug ping successful for %network_bits%.%%a
+
         if %start% equ %stop% exit /b 0
 		call %append% %found_ips% %network_bits%.%%a
+
 		) || (
 			:: if ping failed
 			call :debug no ping response from %network_bits%.%%a
+
             if %start% equ %stop% exit /b 1
 			:: last network, so if we reach here with d=254 then no ftp servers found
 			if %%a equ %stop% (
@@ -415,8 +439,8 @@ exit /b
 set "IP=%1"
 set "PORT=%2"
 (
-:: Run PowerShell silently without showing the progress bar
-powershell -Command "$ProgressPreference='SilentlyContinue'; if (Test-NetConnection -ComputerName %IP% -Port %PORT% -InformationLevel Quiet -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
+	:: Run PowerShell silently without showing the progress bar
+	powershell -Command "$ProgressPreference='SilentlyContinue'; if (Test-NetConnection -ComputerName %IP% -Port %PORT% -InformationLevel Quiet -ErrorAction SilentlyContinue) { exit 0 } else { exit 1 }"
 ) >nul
 exit /b %errorlevel%
 
@@ -425,11 +449,41 @@ exit /b %errorlevel%
 :get_gateways
 :: use call :get_gateways
 :: returns an array of gateways of your pc in format [abc_123.123.123.123 xyz_456.456.456.456]
+
+setlocal enabledelayedexpansion
 set "get_gateways="
-for /f "delims=" %%a in ('cscript //NoLogo "GetGateways.vbs"') do set "get_gateways=%%a" >nul
 ::test
+@REM for /f "delims=" %%a in ('cscript //NoLogo "GetGateways.vbs"') do set "get_gateways=%%a" >nul
 set "get_gateways=wifi_192.168.600.1 lan_192.168.900.1"
 call :debug :get_gateways result: %get_gateways%
+
+set /a "count=0"
+for %%a in (%get_gateways%) do (
+	set /a "count+=1"
+    )
+
+if %count% gtr 1 (
+
+	call :debug multiple gateways found, prompting user for selection
+	set "x="
+	for %%a in (%get_gateways%) do (
+		for /f "tokens=1-2 delims=_" %%b in ("%%a") do (
+			set "x=%%b %%c,!x!"
+		)
+	)
+
+    :: removing trailing comma
+    if defined x set "x=!x:~0,-1!"
+    echo  select the network your ftp server is connected to:
+    call :debug starting :selector !x!
+
+    call :selector !x!
+	)
+
+for /F "tokens=* delims= " %%a in ("!selector!") do (
+    endlocal & set "get_gateways=%%a" 
+	)
+
 exit /b %errorlevel%
 
 
@@ -443,6 +497,7 @@ for /f "tokens=1-4 delims=." %%a in ("%ip%") do (
 	set "network_bits=%%a.%%b.%%c"
 )
 call :debug :network_bits result: %network_bits%
+
 exit /b %errorlevel%
 
 
@@ -480,8 +535,10 @@ set "arg_list="%arg_string:,=" "%""
 @rem Loop through the new quoted, space-separated list
 for %%a in (%arg_list%) do (
 	set /a i+=1
+
 	:: Create dynamic variable names (_1, _2, etc.)
 	for %%b in (_!i!) do (
+
 		set "%%b=%%a"
 		set "choicelist=!choicelist!!i!"
         set "display_value=%%a"
@@ -490,12 +547,14 @@ for %%a in (%arg_list%) do (
 	)   )
 
 call :reset_choice
+
 choice /c %choicelist% /n /m "pick option btn %choicelist:~0,1% and %choicelist:~-1,1% ::"
 for /L %%a in (%choicelist:~-1%,-1,%choicelist:~0,1%) do (
     if errorlevel %%a (
-    for %%b in (!_%%a!) do (
-            endlocal & set "selector=%%b"
-            goto :break
+
+		for %%b in (!_%%a!) do (
+				endlocal & set "selector=%%b"
+				goto :break
     )   )   )
 :break
 set "selector=%selector:"=%"
@@ -519,18 +578,20 @@ if "%debug%"=="0" @exit /b 0 >nul 2>&1
 if not defined debug @exit /b 0 >nul 2>&1
 set "log=%*"
 set "tstamp="
+
 setlocal enabledelayedexpansion
 for /f "tokens=1-2 delims= " %%a in ('time /t') do (
+
 	for /f "tokens=1-3 delims=:" %%b in ("%%a") do (
 		endlocal & set "tstamp=[%%b:%%c]"
-	)
-) 
+		)
+	) 
 if not defined newLogFile (
 	set "newLogFile=1"
 	echo %tstamp% : script started > %LOGPATH%debug.log
-) else (
-	echo %tstamp% : %log% >> %LOGPATH%debug.log
-)
+	) else (
+		echo %tstamp% : %log% >> %LOGPATH%debug.log
+	)
 @exit /b 0 >nul 2>&1
 
 
@@ -539,6 +600,7 @@ if not defined newLogFile (
 :: usage call :set_timeout [time in sec.] [single line command with escaped chars. recommended to be a callback]
 :: then call :check_async to wait for all to finish
 if not defined check_async ( 
+
 	set "foo="%~dp0foo""
 	set /a "set_timeout=1" 
 	) else (
@@ -546,19 +608,20 @@ if not defined check_async (
 	)
 
 set "args=%*"
+
 setlocal enabledelayedexpansion
 set "task_id_%set_timeout%=%random%"
 for /F "tokens=1,* delims= " %%a in ("%args%") do (
     set "t=%%a"
 	set "command=%%b"
-) 
+	) 
 
 set "check_async=v"
 start /b cmd /v:on /c "timeout /t !t! /nobreak >nul & (!command!) && (call %append% %foo% !task_id_%set_timeout%!)"
 
 for %%a in (task_id_%set_timeout%) do (
-  set "x=set "%%a=!%%a!""
-)
+	set "x=set "%%a=!%%a!""
+	)
 
 endlocal & %x% & set "check_async=v"
 goto :eo_set_timeout
@@ -569,15 +632,16 @@ if not exist "foo" (
 	call :debug waiting no task completed yet
 	timeout /t 1 /nobreak >nul 2>&1
 	goto :check_async
-)
+	)
 for /f "usebackq delims=" %%a in (%foo%) do (
+
 	set "line=%%a"
 	(
 	echo !progress_id! | find "!line!" >nul
 	) || (
 		set "progress_id=!line!!progress_id!"
 		)
-)
+	)
 
 for /l %%a in (1,1,%set_timeout%) do (
 	for /f "tokens=2 delims==" %%b in ('set task_id_%%a') do ( set "task_id=%%b" )
@@ -590,7 +654,7 @@ for /l %%a in (1,1,%set_timeout%) do (
 		timeout /t 7 /nobreak >nul 2>&1
 		goto :check_async
 	)
-)
+	)
 
 set "check_async="
 ::test
@@ -614,7 +678,7 @@ for /F "tokens=1,2,* delims= " %%a in ("%args%") do (
     set "rw=%%a" 
     set "file=%%b" 
     set "data=%%c"
-)
+	)
 
 set "LOCK_DIR="!file:"=!Lock""
 set /a TRY_COUNT=0
@@ -641,7 +705,7 @@ mkdir %LOCK_DIR% 2>nul
 rmdir "!LOCK_DIR!" 2>nul
 for /F "tokens=* delims= " %%a in ("!io!") do (
     endlocal & set "io=%%a" 
-)
+	)
 exit /b
 
 
@@ -653,8 +717,7 @@ cls
 set "args=%*"
 set /a spacing=%lines%-%args%
 set /a spacing=%spacing%/2
-
-for /L %%a in (1,1,%spacing%) do ( echo.)
+for /L %%a in (1,1,%spacing%) do echo.
 exit /b 0
 
 
@@ -671,25 +734,24 @@ set /a "ddd=args/2"
 set /a "dds=args-(ddd*2)"
 if %dds% equ 1 (
 	exit /b 0
-) else (
-	exit /b 1
-)
-
+	) else (
+		exit /b 1
+	)
 
 
 
 :check_ftp_simulator
 ::test
-:: filters hosts divisible by 5
+:: filters hosts divisible by %n%
 set "args=%*"
-set /a "ddd=args/100"
-set /a "dds=args-(ddd*100)"
+set "n=6"
+set /a "ddd=args/%n%"
+set /a "dds=args-(ddd*%n%)"
 if %dds% equ 1 (
 	exit /b 0
-) else (
-	exit /b 1
-)
-
+	) else (
+		exit /b 1
+	)
 
 
 
