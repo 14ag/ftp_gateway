@@ -139,7 +139,7 @@ goto :method_3
 :: detecting phone ip from arp table using mac address
 call :formatting 8
 
-echo detecting phone ip ...this won't take long
+echo searching for ftp server ...this won't take long
 if not defined mac_address echo setup mac_address for fast connection & goto method_2
 set "macAddress_lookup="
 if not defined macAddress_lookup (
@@ -158,13 +158,12 @@ set "ip_address=%macAddress_lookup%"
 
 call :debug attempting to connect with ip %ip_address%
 (
-call :connect && goto :eof
+call :connect %ip_address% && goto :eof
 ) || (
-	echo quick connect failed , retrying...
+	echo an error occured, retrying...
 	if defined method_1 goto :method_2
 	netsh interface ip delete arpcache
 	set "method_1=1"
-	call :debug could not connect with method 1,
 	goto :method_1
 )
 
@@ -216,49 +215,51 @@ call :get_gateway
 call :debug detected gateways: %get_gateway%
 
 echo  please wait...
-for /f "tokens=1-2 delims=_" %%a in ("%get_gateway%") do (
+for %%a in (%get_gateway%) do (
+	echo scanning %%a for ftp servers
 
-	call :debug scanning %%a with gateway %%b
-
-	echo scanning the %%a gateway for ftp servers
-
-	call :debug attempting connection to ip %%b
+	call :debug attempting connection to gateway ip %%a
 
 	(
-		call :connect %%b && goto :eof
+		call :connect %%a && goto :eof
 	) || (
-		call :debug no ftp servers could be found on %%b
+		call :debug no ftp servers could be found on gateway %%a
 	)
 )
 
 
 setlocal enabledelayedexpansion
-for /f "tokens=1-2 delims=_" %%a in ("%get_gateway%") do (
-	call :debug scanning network type %%a with gateway %%b
+for %%a in (%get_gateway%) do (
+	echo scanning ips in gateway %%a for ftp servers
+	call :debug scanning ips in gateway %%a
 
-	echo scanning the %%a for ftp servers
-	call :network_bits %%b
+	call :network_bits %%a
 
 	call :debug network bits: !network_bits!
 	
-	call :set_timeout 1 %ping_handler% %%b !network_bits! 1-50
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 1-10
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 11-20
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 21-30
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 31-40
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 41-50
+	call :check_async
+	for /f "usebackq tokens=* delims=" %%b in ("%found_ips%") do (
+		for %%c in (%%b) do (
+			call :connect %%c && goto :eof
+		)	)
+	del found >nul 2>&1
 
-	call :set_timeout 1 %ping_handler% %%b !network_bits! 51-100
 
-	call :set_timeout 1 %ping_handler% %%b !network_bits! 101-150
-
-	call :set_timeout 1 %ping_handler% %%b !network_bits! 151-200
-
-	call :set_timeout 1 %ping_handler% %%b !network_bits! 201-254
-
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 51-100
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 101-150
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 151-200
+	call :set_timeout 1 %ping_handler% %%a !network_bits! 201-254
 	call :check_async
 
-	for /f "usebackq tokens=* delims=" %%c in ("%found_ips%") do (
-		for %%d in (%%c) do (
-			call :connect %%d && goto :eof
-		)
-		
-	)
+	for /f "usebackq tokens=* delims=" %%b in ("%found_ips%") do (
+		for %%c in (%%b) do (
+			call :connect %%c && goto :eof
+		)	)
 
 
 )
