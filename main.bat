@@ -1,5 +1,5 @@
 ::test
-@echo off
+@REM @echo off
 
 
 
@@ -33,7 +33,7 @@ set "append="%~f0" :io ww"
 set "ip_address="
 :: test
 REM set LOGPATH=%userprofile%\desktop\
-set LOGPATH=%userprofile%\sauce\batch_scripts\ftp_gateway\
+set "LOGPATH=%userprofile%\sauce\batch_scripts\ftp_gateway\"
 set "INI=%USERPROFILE%\Desktop\ftp_settings.ini"
 
 
@@ -49,8 +49,8 @@ if not exist "%INI%" (
       echo ; mac address format xx-xx-xx-xx-xx-xx
       echo MAC_ADDRESS=
 	  echo.
-      echo ; set debug to 0 for off or 1 to get log file on your desktop folder
-      echo debug=
+      echo ; set debug to 0 ^(default^) for off or 1 to get log file on your desktop folder
+      echo debug=0
     ) > %INI%
     echo config file created. Press any key to open it for editing.
     pause >nul
@@ -95,7 +95,7 @@ call :debug initial parameters: FTP_USER=%FTP_USER% FTP_PASS=%FTP_PASS% FTP_PORT
 
 ::==================================================================================================================================================
 ::test
-goto :method_3
+goto :method_2
 
 
 
@@ -243,19 +243,19 @@ for %%a in (%get_gateway%) do (
 	call :set_timeout 1 %ping_handler% %%a !network_bits! 31-40
 	call :set_timeout 1 %ping_handler% %%a !network_bits! 41-50
 	call :check_async
+	::test
+	cls
 	for /f "usebackq tokens=* delims=" %%b in ("%found_ips%") do (
 		for %%c in (%%b) do (
 			call :connect %%c && goto :eof
 		)	)
+
 	del found >nul 2>&1
-
-
 	call :set_timeout 1 %ping_handler% %%a !network_bits! 51-100
 	call :set_timeout 1 %ping_handler% %%a !network_bits! 101-150
 	call :set_timeout 1 %ping_handler% %%a !network_bits! 151-200
 	call :set_timeout 1 %ping_handler% %%a !network_bits! 201-254
 	call :check_async
-
 	for /f "usebackq tokens=* delims=" %%b in ("%found_ips%") do (
 		for %%c in (%%b) do (
 			call :connect %%c && goto :eof
@@ -266,28 +266,14 @@ for %%a in (%get_gateway%) do (
 endlocal
 
 :method_2a
-call :formatting 5
-echo %*
+call :formatting 5 couldnt find ftp server on %get_gateway%
+
 call :selector try auto mode again,manual input,exit
+
 if /i "%selector%"=="exit" goto :eof
 if /i "%selector%"=="enter phone ip" goto :method_3
 if /i "%selector%"=="try auto mode again" goto :method_1
 goto :menu
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -346,15 +332,8 @@ call :debug user entered host_bits: %host_bits%
 set "ip_address=%network_bits%.%host_bits%"
 call :debug ip_address: %ip_address%
 
-::test
-for /f "tokens=4 delims=." %%a in ("%ip_address%") do (
-    set "host=%%a"
-	)
-
 (
-	::test
-	rem call :connect %ip_address% && goto :eof
-	call :connect %host% && goto :eof
+	call :connect %ip_address% && goto :eof
 	) || (
 		echo no ftp servers could be found on %ip_address%
 		pause
@@ -428,13 +407,13 @@ for /f "tokens=4 delims=." %%a in ("%user_ip_address%") do (
 call :debug pinging %user_ip_address%
 
 (
-call :ping_handler %get_gateway% %UIP_network_bits% %host%-%host%
+call :ping_handler %user_ip_address% %UIP_network_bits% %host%-%host%
 ) && (
 	echo. >nul
 	(
         ::test
 		REM call :connect %user_ip_address% && goto :eof
-		call :connect %host% && goto :eof
+		call :connect %user_ip_address% && goto :eof
 
 	) || (
 		call :method_4a ftp server not found on %user_ip_address%
@@ -456,6 +435,8 @@ if /i "%selector%"=="quick input" goto :method_3
 if /i "%selector%"=="try again" goto :method_4
 if /i "%selector%"=="auto mode" goto :method_2a
 goto :menu
+
+
 
 
 
@@ -508,7 +489,7 @@ call :formatting 1
 
 echo something went wrong
 start notepad.exe %LOGPATH%
-pause & exit
+pause & goto :eof
 
 
 
@@ -518,24 +499,29 @@ pause & exit
 :: define %FTP_PORT%
 :: use connect [ip address]
 set "ip_address=%*"
+::test
+for /f "tokens=4 delims=." %%a in ("%ip_address%") do (
+    set "host=%%a"
+	)
 :: (search) && ((found) && (killed) || (unkilled)) || (unfound)
 (
 	::test
 	REM call :check_ftp %ip_address% %FTP_PORT%
-	call :check_ftp_simulator %ip_address%
+	
+	call :check_ftp_simulator %host%
 
 ) && ( 
 	::ftp server found
 	::test
-	msg * /server:127.0.0.1 /w "connected to ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT%"
+	msg %username% /server:%COMPUTERNAME% /w "connected to ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT%"
 	::test
 	REM explorer ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT% >nul
-	call :debug ftp server found on %ip_address%
+	call :debug ftp server found on _%ip_address%_
 
 	exit /b 0
 	) || ( 
 		::ftp server not found
-		call :debug no ftp on %ip_address%
+		call :debug no ftp on _%ip_address%_
 		exit /b 1		 
 		)
 
@@ -835,7 +821,7 @@ if not defined newLogFile (
 	set "newLogFile=1"
 	echo %tstamp% : script started > %LOGPATH%debug.log
 	) else (
-		echo %tstamp% : %log% >> %LOGPATH%debug.log
+		echo %tstamp% : %log%>>%LOGPATH%debug.log 2>nul
 	)
 @exit /b 0 >nul 2>&1
 
@@ -955,11 +941,11 @@ mkdir %LOCK_DIR% 2>nul
     if "!rw!"=="r" (
         set /p "io="<!file! || call :debug ERROR reading [!file!]
     ) else if "!rw!"=="w" (
-            echo !data! >!file! || call :debug ERROR writing [!data!] to [!file!]
+            echo !data!>!file! || call :debug ERROR writing [!data!] to [!file!]
 	) else if "!rw!"=="ww" (
-		echo !data! >>!file! || call :debug ERROR writing [!data!] to [!file!]
+		echo !data!>>!file! || call :debug ERROR writing [!data!] to [!file!]
 	)
-	call :debug io [!rw!] operation on file [!file!] with data [!data! !io!]
+	call :debug io [!rw!] operation on file [!file!] with data [!data!!io!]
 ) || (
     timeout /t 5 /nobreak >nul
     set /a TRY_COUNT+=1
@@ -996,7 +982,7 @@ for /F "tokens=1,* delims= " %%a in ("%args%") do (
     set "n=%%a" 
     set "i=%%b" 
 	)
-set /a spacing=(%lines%-%n%)/2
+set /a "spacing=(%lines%-%n%)/2"
 for /L %%a in (1,1,%spacing%) do (
 	if %%a equ %spacing% (
 		echo %i%
@@ -1050,4 +1036,4 @@ if %dds% equ 0 (
 
 
 :eof
-exit
+exit /b 0
