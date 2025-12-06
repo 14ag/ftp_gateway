@@ -1,5 +1,5 @@
 ::test
-@REM @echo off
+@echo off
 
 
 
@@ -95,7 +95,7 @@ call :debug initial parameters: FTP_USER=%FTP_USER% FTP_PASS=%FTP_PASS% FTP_PORT
 
 ::==================================================================================================================================================
 ::test
-goto :method_2
+@REM goto :method_2
 
 
 
@@ -137,9 +137,8 @@ goto :method_2
 
 :method_1
 :: detecting phone ip from arp table using mac address
-call :formatting 8
+call :formatting 8 searching for ftp server ...this won't take long
 
-echo searching for ftp server ...this won't take long
 if not defined mac_address echo setup mac_address for fast connection & goto method_2
 set "macAddress_lookup="
 if not defined macAddress_lookup (
@@ -150,7 +149,6 @@ if not defined macAddress_lookup (
 call :debug result of MAC address detection: %macAddress_lookup%
 
 if not defined macAddress_lookup (
-	echo attempting slow search
 	goto :method_2
 )
 
@@ -160,7 +158,7 @@ call :debug attempting to connect with ip %ip_address%
 (
 call :connect %ip_address% && goto :eof
 ) || (
-	echo an error occured, retrying...
+	echo  retrying...
 	if defined method_1 goto :method_2
 	netsh interface ip delete arpcache
 	set "method_1=1"
@@ -1024,7 +1022,7 @@ if %dds% equ 1 (
 ::test
 :: filters hosts divisible by %n%
 set "args=%*"
-set "n=7"
+set "n=33"
 set /a "ddd=args/%n%"
 set /a "dds=args-(ddd*%n%)"
 if %dds% equ 0 (
