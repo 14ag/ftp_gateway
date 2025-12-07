@@ -223,9 +223,7 @@ for %%a in (%get_gateway%) do (
 		call :connect %%a && goto :eoff
 	) || (
 		call :debug no ftp servers could be found on gateway %%a
-	)
-)
-
+)	)
 
 setlocal enabledelayedexpansion
 for %%a in (%get_gateway%) do (
@@ -352,7 +350,7 @@ call :debug option selected _%selector%_
 if /i "%selector%"=="enter full ip address" goto :method_4
 if /i "%selector%"=="select different gateway" goto :method_3
 if /i "%selector%"=="scan for server" goto :method_2
- goto :error
+goto :error
 
 
 
@@ -392,7 +390,7 @@ call :debug starting direct input
 call :formatting 5 im so sorry this is what i tried to avoid
 :input
 echo.
-set /p "user_ip_address=just enter the full ip address of the phone:"
+set /p "user_ip_address=just enter the full ip address of the phone: "
 call :network_bits %user_ip_address% 
 
 set "UIP_network_bits=%network_bits%"
@@ -433,7 +431,6 @@ call :ping_handler %user_ip_address% %UIP_network_bits% %host%-%host%
 	)
 
 :method_4a
-
 call :formatting 5 %*
 
 echo.
@@ -443,32 +440,8 @@ if /i "%selector%"=="exit" goto :eoff
 if /i "%selector%"=="quick input" goto :method_3
 if /i "%selector%"=="try again" goto :method_4
 if /i "%selector%"=="scan for server" goto :method_2a
- goto :error
+goto :error
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-::==================================================================================================================================================
 
 
 
@@ -515,18 +488,16 @@ for /f "tokens=4 delims=." %%r in ("%ip_address%") do (
 (
 	::test
 	REM call :check_ftp %ip_address% %FTP_PORT%
-	
 	call :check_ftp_simulator %host%
 
 ) && ( 
 	::ftp server found
 	call :debug ftp server found on _%ip_address%_
 	::test
-	msg %username% /server:%COMPUTERNAME% /w "connected to ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT%"
 	REM explorer ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT% >nul
 	rem exit /b 0
+	msg %username% /server:%COMPUTERNAME% /w "connected to ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT%"
 	goto :next_test
-
 	) || ( 
 		::ftp server not found
 		call :debug no ftp on _%ip_address%_
@@ -560,8 +531,7 @@ for /F "tokens=1,2,3 delims= " %%e in ("%args%") do (
 
 	for /F "tokens=1,2 delims=-" %%h in ("%%g") do (
 		endlocal & ( set "p_gateway=%%e" & set "p_network_bits=%%f" & set "start=%%h" & set "stop=%%i" )
-	) 
-)
+)	) 
 
 for /l %%e in (%start%,1,%stop%) do (
 	if not "%p_network_bits%.%%e"=="%p_gateway%" (
@@ -585,10 +555,7 @@ for /l %%e in (%start%,1,%stop%) do (
 			:: last network, so if we reach here with d=254 then no ftp servers found
 			if %%e equ %stop% (
 				call :debug end of range
-			)			
-		)
-	)
-)
+	)	)	)	)
 
 exit /b
 
@@ -653,8 +620,7 @@ if %count% gtr 1 (
 	for %%m in (%get_gateway%) do (
 		for /f "tokens=1-2 delims=_" %%n in ("%%m") do (
 			set "x=%%n %%o,!x!"
-		)
-	)
+	)	)
 
     :: removing trailing comma
     if defined x set "x=!x:~0,-1!"
@@ -825,8 +791,8 @@ for /f "tokens=1-2 delims= " %%x in ('time /t') do (
 
 	for /f "tokens=1-3 delims=:" %%y in ("%%x") do (
 		endlocal & set "tstamp=[%%y:%%z]"
-		)
-	) 
+	)	)
+	
 if not defined newLogFile (
 	set "newLogFile=1"
 	echo %tstamp% : script started > %LOGPATH%debug.log
@@ -893,8 +859,7 @@ for /f "usebackq delims=" %%i in (%foo%) do (
 	echo !progress_id! | find "!line!" >nul
 	) || (
 		set "progress_id=!line!!progress_id!"
-		)
-	)
+	)	)
 
 for /l %%i in (1,1,%set_timeout%) do (
 	for /f "tokens=2 delims==" %%j in ('set task_id_%%i') do ( set "task_id=%%j" )
@@ -905,8 +870,7 @@ for /l %%i in (1,1,%set_timeout%) do (
 	) || (
 		timeout /t 1 /nobreak >nul 2>&1
 		goto :check_async0
-	)
-	)
+	)	)
 
 set "check_async="
 ::test
@@ -1003,8 +967,8 @@ for /L %%y in (1,1,%spacing%) do (
 		)
 	) else (
 		echo.
-	)
-)
+	)	)
+
 exit /b 0
 
 
