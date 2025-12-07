@@ -24,11 +24,10 @@ This project creates a desktop `.ini` configuration and uses built-in Windows to
 ## File overview
 - `main.bat` — main entry point / menu
 - `main_test.bat` — test-mode (dry run)
-- `lab2.bat` — helper / example task
+- `lab2.bat` — run test functions
 - `GetGateways.vbs` — discovers gateway(s) on the local network
-- `ip.vbs` — shows/manipulates IP information
-- `icon11.ico` — icon used for shortcuts
-- `.gitignore` — files to ignore in commits
+- `icon11.ico` — icon used
+- `.gitignore` — iykyk
 
 ## Configuration
 The script writes an `.ini` file to the desktop named `ftpconfig.ini`. Example contents:
