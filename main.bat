@@ -95,7 +95,7 @@ call :debug initial parameters: FTP_USER=%FTP_USER% FTP_PASS=%FTP_PASS% FTP_PORT
 
 ::==================================================================================================================================================
 ::test
-rem goto :method_2
+goto :method_2
 
 
 
@@ -204,64 +204,57 @@ set "ip_address="
 set "found_ips=found"
 set "ping_handler=call "%~f0" :ping_handler"
 
-call :debug starting ip scan
+call :debug #2 starting ip scan
 
-call :debug fetching gateways
+call :debug #2 fetching gateways
 
 call :get_gateway
 
-call :debug detected gateways: %get_gateway%
+call :debug #2 detected gateways: %get_gateway%
 
 call :formatting 3   please wait...
 
-for %%a in (%get_gateway%) do (
-	echo scanning %%a for ftp servers
+echo scanning %get_gateway% for ftp servers
 
-	call :debug attempting connection to gateway ip %%a
+call :debug #2 attempting connection to gateway ip %get_gateway%
 
-	(
-		call :connect %%a && goto :eoff
-	) || (
-		call :debug no ftp servers could be found on gateway %%a
-)	)
+(
+	call :connect %get_gateway% && goto :eoff
+) || (
+	call :debug #2 no ftp servers could be found on gateway %get_gateway%
+)	
+
+echo scanning ips in gateway %get_gateway% for ftp servers
+call :debug #2 scanning ips in gateway %get_gateway%
+
+call :network_bits %get_gateway%
+
+call :debug #2 network bits: %network_bits%
 
 setlocal enabledelayedexpansion
-for %%a in (%get_gateway%) do (
-	echo scanning ips in gateway %%a for ftp servers
-	call :debug scanning ips in gateway %%a
+for /l %%a in (1,50,250) do (
 
-	call :network_bits %%a
+    set "start=%%a"
+    set /a "stop=!start!+49"
+    if !start! equ 241 set /a "stop=!start!+13"
+    for /l %%b in (!start!,10,!stop!) do (
 
-	call :debug network bits: !network_bits!
+        set "ipRangeStart=%%b"
+        set /a "ipRangeStop=!ipRangeStart!+9"
+        if !ipRangeStart! equ 241 set /a "ipRangeStop=!ipRangeStart!+13"
+        call :set_timeout 1 %ping_handler% %get_gateway% %network_bits% !ipRangeStart!-!ipRangeStop!
+    )
+    call :check_async
 	
-	call :set_timeout 1 %ping_handler% %%a !network_bits! 1-10
-	call :set_timeout 1 %ping_handler% %%a !network_bits! 11-20
-	call :set_timeout 1 %ping_handler% %%a !network_bits! 21-30
-	call :set_timeout 1 %ping_handler% %%a !network_bits! 31-40
-	call :set_timeout 1 %ping_handler% %%a !network_bits! 41-50
-	call :check_async
-	::test
-	cls
 	for /f "usebackq tokens=* delims=" %%b in ("%found_ips%") do (
 		for %%c in (%%b) do (
 			call :connect %%c && goto :eoff
-		)	)
+	)	)
 
 	del found >nul 2>&1
-	::test
-	rem call :set_timeout 1 %ping_handler% %%a !network_bits! 51-100
-	rem call :set_timeout 1 %ping_handler% %%a !network_bits! 101-150
-	rem call :set_timeout 1 %ping_handler% %%a !network_bits! 151-200
-	rem call :set_timeout 1 %ping_handler% %%a !network_bits! 201-254
-	rem call :check_async
-	rem for /f "usebackq tokens=* delims=" %%b in ("%found_ips%") do (
-	rem 	for %%c in (%%b) do (
-	rem 		call :connect %%c && goto :eoff
-	rem 	)	)
-
-
 )
-endlocal
+
+
 
 :method_2a
 call :formatting 5 couldnt find ftp server on %get_gateway%
