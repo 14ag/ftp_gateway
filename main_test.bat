@@ -1,4 +1,7 @@
+::test
 @echo off
+
+
 
 :: callback config
 setlocal enabledelayedexpansion       
@@ -9,21 +12,29 @@ for /F "tokens=1,* delims= " %%a in ("%args%") do (
 
 if defined function call %function% %args% & exit /b
 
+
+
+
 :: tool config
 title FTP 
 prompt $g$g$s
 set "lines=20"
-mode con: cols=60 lines=%lines%
+:: test
+REM mode con: cols=60 lines=%lines%
 del foo >nul 2>&1
 del found >nul 2>&1
 set "read="%~f0" :io r"
 set "write="%~f0" :io w"
 set "append="%~f0" :io ww"
 
+
 :: init
 set "ip_address="
-set LOGPATH=%userprofile%\desktop\
+:: test
+REM set LOGPATH=%userprofile%\desktop\
+set "LOGPATH=%userprofile%\sauce\batch_scripts\ftp_gateway\"
 set "INI=%USERPROFILE%\Desktop\ftp_settings.ini"
+
 
 setlocal EnableDelayedExpansion
 :create
@@ -81,6 +92,46 @@ endlocal & %x%
 
 call :debug initial parameters: FTP_USER=%FTP_USER% FTP_PASS=%FTP_PASS% FTP_PORT=%FTP_PORT% mac_address=%mac_address%
 
+::==================================================================================================================================================
+::test
+goto :method_2
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 :method_1
@@ -112,6 +163,37 @@ call :connect %ip_address% && goto :eoff
 	set "method_1=1"
 	goto :method_1
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -186,6 +268,39 @@ if /i "%selector%"=="scan again" goto :method_1
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :method_3
 :: method 3 - quick input ip address
 set "ip_address="
@@ -215,7 +330,6 @@ call :debug #3 ip_address: %ip_address%
 		)
 
 
-
 :method_3a
 
 call :formatting 5 %*
@@ -228,6 +342,36 @@ if /i "%selector%"=="enter full ip address" goto :method_4
 if /i "%selector%"=="select different gateway" goto :method_3
 if /i "%selector%"=="scan for server" goto :method_2
 goto :error
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -253,6 +397,7 @@ if not "%UIP_network_bits%"=="%network_bits%" (
 	goto :input
 	)
 
+::test
 for /f "tokens=4 delims=." %%a in ("%user_ip_address%") do (
     set "host=%%a"
 	)
@@ -264,6 +409,8 @@ call :ping_handler %user_ip_address% %UIP_network_bits% %host%-%host%
 ) && (
 	echo. >nul
 	(
+        ::test
+		REM call :connect %user_ip_address% && goto :eoff
 		call :connect %user_ip_address% && goto :eoff
 
 	) || (
@@ -272,8 +419,6 @@ call :ping_handler %user_ip_address% %UIP_network_bits% %host%-%host%
 ) || (
 	call :method_4a %user_ip_address% is unreachable
 	)
-
-
 
 :method_4a
 call :formatting 5 %*
@@ -289,24 +434,81 @@ goto :error
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :connect
 :: define %FTP_PORT%
 :: use connect [ip address]
 set "ip_address=%*"
+::test
+for /f "tokens=4 delims=." %%r in ("%ip_address%") do (
+    set "host=%%r"
+	)
 :: (search) && ((found) && (killed) || (unkilled)) || (unfound)
 (
-	call :check_ftp %ip_address% %FTP_PORT%
+	::test
+	REM call :check_ftp %ip_address% %FTP_PORT%
+	call :check_ftp_simulator %host%
 
 ) && ( 
 	::ftp server found
 	call :debug ftp server found on _%ip_address%_
-	explorer ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT% >nul
-	exit /b 0
+	::test
+	REM explorer ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT% >nul
+	rem exit /b 0
+	msg %username% /server:%COMPUTERNAME% /w "connected to ftp://%FTP_USER%:%FTP_PASS%@%ip_address%:%FTP_PORT%"
+	goto :next_test
 	) || ( 
 		::ftp server not found
 		call :debug no ftp on _%ip_address%_
+		::test
+		:next_test
 		exit /b 1		 
 		)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -326,7 +528,8 @@ for /l %%e in (%start%,1,%stop%) do (
 					
 		echo. >nul
 		(
-		ping -n 1 -w 10 %network_bits%.%%e | find "TTL=" >nul
+		::ping -n 1 -w 10 %network_bits%.%%e | find "TTL=" >nul
+		call :ping_simulator %%e
 		) && (
 		:: if ping successful
 		call :debug ping successful for %network_bits%.%%e
@@ -348,6 +551,21 @@ exit /b
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :check_ftp
 :: Usage: check_ftp <IP_address> <PORT>
 :: returns errorlevel 0 if ftp server is reachable and 1 if not
@@ -361,13 +579,24 @@ exit /b %errorlevel%
 
 
 
+
+
+
+
+
+
+
+
+
 :get_gateway
 :: use call :get_gateway
 :: returns an array of gateways of your pc in format [abc_123.123.123.123 xyz_456.456.456.456]
 
 setlocal enabledelayedexpansion
 set "get_gateway="
-for /f "delims=" %%m in ('cscript //NoLogo "GetGateways.vbs"') do set "get_gateway=%%m" >nul
+::test
+REM for /f "delims=" %%m in ('cscript //NoLogo "GetGateways.vbs"') do set "get_gateway=%%m" >nul
+set "get_gateway=wifi_192.168.600.1 lan_192.168.900.1"
 
 set /a "count=0"
 for %%m in (%get_gateway%) do (
@@ -400,6 +629,20 @@ exit /b %errorlevel%
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 :network_bits
 :: Usage: network_bits <IP_address>
 set "network_bits="
@@ -411,6 +654,18 @@ for /f "tokens=1-4 delims=." %%w in ("%ip%") do (
 call :debug :network_bits result: %network_bits%
 
 exit /b %errorlevel%
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -430,6 +685,20 @@ arp -a | find /i "%macAddress%" >nul
 	exit /b 1
 	)
 exit /b 0
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -474,6 +743,11 @@ exit /b 0
 
 
 
+
+
+
+
+
 :reset_choice
 :: reset errorlevel for correct choice
 :: use immediately before choice command
@@ -482,8 +756,21 @@ exit /b 0
 
 
 
+
+
+
+
+
+
+
+
+
+
 :debug
 ::define "logpath" and "newLogFile=" before your code
+::test
+REM @exit /b 0 >nul 2>&1
+
 if "%debug%"=="0" @exit /b 0 >nul 2>&1
 if not defined debug @exit /b 0 >nul 2>&1
 set "log=%*"
@@ -503,6 +790,14 @@ if not defined newLogFile (
 echo %tstamp% : %log%>>%LOGPATH%debug.log 2>nul
 
 @exit /b 0 >nul 2>&1
+
+
+
+
+
+
+
+
 
 
 
@@ -536,7 +831,6 @@ for %%i in (task_id_%set_timeout%) do (
 endlocal & %x% & set "check_async=v"
 goto :eo_set_timeout
 
-
 :check_async
 set "count=0"
 :check_async0
@@ -569,10 +863,23 @@ for /l %%i in (1,1,%set_timeout%) do (
 	)	)
 
 set "check_async="
-del %foo% >nul 2>&1
+::test
+REM del %foo% >nul 2>&1
 :eo_set_timeout
 endlocal
 exit /b 0
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -621,6 +928,16 @@ exit /b
 
 
 
+
+
+
+
+
+
+
+
+
+
 :formatting
 :: formatting just because
 :: Usage: formatting <number_of_blank_lines>
@@ -646,6 +963,8 @@ exit /b 0
 
 
 
+
+
 :error
 call :error
 
@@ -654,6 +973,40 @@ call :formatting 1
 echo something went wrong
 start notepad.exe %LOGPATH%
 pause & goto :eoff
+
+
+
+
+
+
+
+
+:ping_simulator
+::test
+:: filters odd number hosts
+set "args=%*"
+set /a "ddd=args/2"
+set /a "dds=args-(ddd*2)"
+if %dds% equ 1 (
+	exit /b 0
+	) else (
+		exit /b 1
+	)
+
+
+
+:check_ftp_simulator
+::test
+:: filters hosts divisible by %n%
+set "args=%*"
+set "n=33"
+set /a "ddd=args/%n%"
+set /a "dds=args-(ddd*%n%)"
+if %dds% equ 0 (
+	exit /b 0
+	) else (
+		exit /b 1
+	)
 
 
 
