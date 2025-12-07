@@ -16,6 +16,7 @@ This project creates a desktop `.ini` configuration and uses built-in Windows to
 - PowerShell enabled
 - VBScript enabled
 - Firewall permissions to reach FTP server
+- subnet mask `255.255.255.0`
 
 ## Quick start
 1. Download the latest release
