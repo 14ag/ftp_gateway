@@ -389,11 +389,17 @@ if %count% gtr 1 (
     call :debug starting :selector !x!
 
     call :selector !x!
+	for /F "tokens=2 delims= " %%m in ("!selector!") do (
+		endlocal & set "get_gateway=%%m" 
+		)
+
+	) else if %count% equ 1 (
+
+	for /f "tokens=1-2 delims=_" %%m in ("%get_gateway%") do (
+		endlocal & set "get_gateway=%%n"
+		)
 	)
 
-for /F "tokens=2 delims= " %%m in ("!selector!") do (
-    endlocal & set "get_gateway=%%m" 
-	)
 
 call :debug :get_gateway result: %get_gateway%
 exit /b %errorlevel%
@@ -658,4 +664,5 @@ pause & goto :eoff
 
 
 :eoff
+del found >nul 2>&1
 exit
