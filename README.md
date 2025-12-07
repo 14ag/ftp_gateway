@@ -19,7 +19,7 @@ This project creates a desktop `.ini` configuration and uses built-in Windows to
 - subnet mask `255.255.255.0`
 
 ## Quick start
-1. Download the latest release
+1. Download the [latest release](https://github.com/14ag/ftp_gateway/releases/tag/v2.1)
 
 ## File overview
 - `main.bat` — main entry point / menu
