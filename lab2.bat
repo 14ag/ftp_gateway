@@ -112,3 +112,33 @@ echo %host%
 @REM exit /b 0
 
 pause
+
+
+
+
+
+
+
+
+
+
+@REM :generate_intervals
+@REM @echo off
+@REM setlocal enabledelayedexpansion
+
+@REM for /l %%v in (1,50,250) do (
+@REM     set "start=%%v"
+@REM     set /a "stop=!start!+49"
+@REM     if !start! equ 241 set /a "stop=!start!+13"
+@REM     for /l %%w in (!start!,10,!stop!) do (
+@REM         set "ipRangeStart=%%w"
+@REM         set /a "ipRangeStop=!ipRangeStart!+9"
+@REM         if !ipRangeStart! equ 241 set /a "ipRangeStop=!ipRangeStart!+13"
+@REM         echo !ipRangeStart!-!ipRangeStop!
+@REM     )
+@REM     echo.
+@REM )
+@REM pause
+@REM exit
+
+@REM     set "stop=!start!+%checkrange%"
