@@ -613,7 +613,7 @@ mkdir %LOCK_DIR% 2>nul
 	)
 	call :debug io [!rw!] operation on file [!file!] with data [!data!!io!]
 ) || (
-    timeout /t 3 /nobreak >nul
+    timeout /t 2 /nobreak >nul
     set /a TRY_COUNT+=1
     if !TRY_COUNT! lss %MAX_TRY% goto TryLock
     echo max wait.
