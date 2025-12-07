@@ -1,4 +1,5 @@
 ::test
+:: connect successful with any ip x.x.x.33
 @echo off
 
 
