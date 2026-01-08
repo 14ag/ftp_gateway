@@ -653,7 +653,6 @@ exit /b 0
 
 
 :error
-call :error
 
 call :formatting 1
 
