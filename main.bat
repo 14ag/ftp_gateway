@@ -540,19 +540,19 @@ for %%i in (task_id_%set_timeout%) do (
 	)
 
 endlocal & %x% & set "check_async=v"
-goto :eo_set_timeout
+exit /b 0
 
 
 :check_async
 set "count=0"
-:check_async0
 setlocal enabledelayedexpansion
+:check_async0
 if %count% equ 61 echo ##001 something went wrong & goto :eoff
 set /a "count+=1"
 if not exist "foo" (
-	call :debug waiting no task completed yet
+	call :debug waiting: no task completed yet
 	timeout /t 1 /nobreak >nul 2>&1
-	goto :check_async
+	goto :check_async0
 	)
 for /f "usebackq delims=" %%i in (%foo%) do (
 
@@ -576,7 +576,6 @@ for /l %%i in (1,1,%set_timeout%) do (
 
 set "check_async="
 del %foo% >nul 2>&1
-:eo_set_timeout
 endlocal
 exit /b 0
 
